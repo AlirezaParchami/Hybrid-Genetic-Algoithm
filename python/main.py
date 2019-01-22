@@ -32,20 +32,21 @@ def reproduction(x, y):
 def knapsnack(x, fn):
     # Open file
     filename = "..//Dataset//" + fn + ".txt"
-    data = open(filename , "r")
+    data = open(filename, "r")
     #Read first line and detect the number and MaxWeight
     first_line = data.readline().split(" ")
     numbers = int(first_line[0])
     max_weight = int(first_line[1])
     values = []
     weights = []
+    # Read each line and calculate the weight and value for x
     for line in data:
         splited_data = line.split(" ")
         values.append(int(splited_data[0]))
         weights.append(int(splited_data[1]))
+    sum_weight = 0
+    sum_value = 0
     for i in range(0, len(x)):
-        sum_weight = 0
-        sum_value = 0
         if (x[i] == '1'):
             sum_weight += weights[i]
             sum_value += values[i]
@@ -55,17 +56,14 @@ def knapsnack(x, fn):
 
 #a = "abcdefg"
 #print(a[:3], a[3:])
-s = "00101"
-for x in range(0, len(s)):
-    print(x)
-    print(type(s[x]))
-    print(s[x])
-    print(type(int(s[x],2)))
-    print("---------------+")
 indivSize = int(input("Enter the length of Individual: "))
 popSize = int(input("Enter the number of population: "))
 b = population_generation(popSize, indivSize)
 print("b= ", b)
-#reproduction(b[0], b[1])
+
 fn = input("Enter the name of your file: ")
-knapsnack(b[0], fn)
+person_fitness = []
+for person in b:
+    person_fitness.append(knapsnack(person, fn))
+
+#reproduction(b[0], b[1])
