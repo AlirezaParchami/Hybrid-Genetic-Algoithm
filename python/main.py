@@ -191,25 +191,24 @@ def read_file():
         data.append(tmp)
 
 
+def heuristic():
+    heuristic_values = []
+    for x in persons:
+        tmp = (x, abs(knapsnack(x)-optimum_value)/maxWeight)
+        heuristic_values.append(tmp)
+    heuristic_values.sort(key=lambda tup: tup[1])
 
 
-"""
-for i in range(0, 3):
-    print(i)
-# 0 1 2    
-a = "0123456789"
-print(a[:0])
-# 
-print(a[:1])
-# 0
-print(a[:4])
-# 0 1 2 3
-print(a[1:4])
-# 1 2 3
-print(a[1:])
-# 1 2 3 4 5 6 7 8 9
+def goal_test():
+    sum = 0
+    for i in path:
+        sum += i[1]
+    if sum < optimum_value or sum > optimum_value:
+        return False
+    elif sum == optimum_value:
+        return True
 
-"""
+
 mode = int(input("Enter Mode: 1-Genetic 2-A* : "))
 if mode == 1:
     finfuncstart = 0
@@ -250,9 +249,23 @@ if mode == 1:
     print("BEST Person: ", persons[0])
     print("Best Person Fitness: ", knapsnack(persons[0]))
     print("Fitness average: ", average)
-
-elif mode ==2 :
+elif mode ==2:  # A* Algorithm
     filename = input("Enter the name of your file: ")
     filename = "..//Dataset//" + filename + ".txt"
     read_file()
-    persons=[]
+    persons = []
+    optimum_value = 0
+    if filename == "ks_20_878":
+        optimum_value = 1024
+    elif filename == "ks_100_997":
+        optimum_value = 2397
+    elif filename == "ks_200_1008":
+        optimum_value = 1634
+    else:
+        print("Something is wrong in filename")
+    maxWeight = data[0][1]
+    path = []
+    while goal_test(path):
+        heuristic()
+
+
