@@ -23,13 +23,13 @@ def population_generation(pop_size, indiv_size):
     return myList
 
 
-def reproduction(indiv_size, cross_prob, mut_prob, persons, person_fitness, parentPercent, offspringPercent):
+def reproduction(cross_prob, mut_prob, persons, person_fitness, parentPercent, offspringPercent):
     # Select parents, crossover, mutation
     children = []
     SP = parent_selection(persons, person_fitness, parentPercent, offspringPercent)  # Selected Parents
-    print("SP: ", SP)
+    print("selected parents: ", SP)
     for x in SP:
-        x[0], x[1] = crossover(cross_prob, indiv_size, x[0], x[1])
+        x[0], x[1] = crossover(cross_prob, indivSize, x[0], x[1])
         x[0] = mutation(mut_prob, indivSize, x[0])
         x[1] = mutation(mut_prob, indivSize, x[1])
         children.append(x[0])
@@ -39,26 +39,22 @@ def reproduction(indiv_size, cross_prob, mut_prob, persons, person_fitness, pare
 
 def crossover(cross_prob, length, first, second):
     if random.uniform(0, 1) < cross_prob:
+        print("--------Crossover of: ", first, "  ", second)
         crossover_points = random.sample(range(1, length), 2)
         crossover_points.sort()
         tmp = second
         second = second[:crossover_points[0]] + first[crossover_points[0]:crossover_points[1]] + second[crossover_points[1]:]
         first = first[:crossover_points[0]] + tmp[crossover_points[0]:crossover_points[1]] + first[crossover_points[1]:]
+        print("%%%Crossover Done: ", first, "  ", second)
     return first, second
 
 
 def mutation(mut_prob, length, string):
-    print("-------------- Mutation of ", string)
     for i in range(0, len(string)):
         if random.uniform(0, 1) < mut_prob:
-            if string[i] == "0":
-                string = string[:i] + "1" + string[i+1:]
-            elif string[i] == "1":
-                string = string[:i] + "0" + string[i + 1:]
-            else:
-                print("Something is Wrong. The ", i, " in string ", string, " is ", string[i])
-            print("Mutation Done")
-    print("-----------String after: ", string, "\n")
+            print("------------ Mutation of ", string)
+            switch_char(i, string)
+            print("%%%Mutation Done: ", string, "\n")
     return string
 
 
@@ -92,6 +88,7 @@ def parent_selection(persons, person_fitness, parentPercent, offspringPercent):
     # List of Fitness percents
     fitness_percent = []
     fitness_sum = 0
+    print("Person Fitness in parent_selection func: ", person_fitness)
     for x in person_fitness:
         fitness_sum += x
     tmp = 0
@@ -118,6 +115,48 @@ def parent_selection(persons, person_fitness, parentPercent, offspringPercent):
     return selected_parents
 
 
+def switch_char(index, child):
+    if child[index] == "1":
+        child = child[:index] + "0" + child[index+1:]
+    elif child[index] == "0":
+        child = child[:index] + "1" + child[index+1:]
+    else:
+        print("Something is Wrong. The ", index, " in string ", child, " is ", child[index])
+    return child
+
+
+def neighbor_values(mychild):
+    values = {}  # A dictionary that its key is children and its value is fitness
+    for i in range(0, len(mychild)):
+        tmp = switch_char(i, mychild)
+        values[tmp] = knapsnack(tmp)
+    sorted_values = sorted(values.items(), key=lambda kv: kv[1])
+    sorted_values.reverse()
+    return sorted_values
+
+
+def hill_climbing(mychild, improve, sideway, tabu):
+    if improve > MaxImprove:
+        return mychild
+    child_value = knapsnack(mychild)
+    sorted_values = neighbor_values(mychild)
+    improved_child = ""
+    if sorted_values[0][1] > child_value:
+        improve += 1
+        improved_child = hill_climbing(sorted_values[0][0], improve, sideway, tabu)
+    elif sorted_values[0][1] < child_value:
+        improved_child = mychild
+    else:
+        for x in sorted_values:
+            if x[0] not in tabu and x[1] == child_value:
+                tabu.append(child)
+                sideway += 1
+                improved_child = hill_climbing(x[0], improve, sideway, tabu)
+    return improved_child
+
+
+
+
 """
 for i in range(0, 3):
     print(i)
@@ -142,13 +181,28 @@ print("persons= ", persons)
 
 filename = input("Enter the name of your file: ")
 filename = "..//Dataset//" + filename + ".txt"
-person_fitness = []
-for person in persons:
-    person_fitness.append(knapsnack(person))
-
 parentPercent = float(input("Enter parent percent: "))
 offspringPercent = float(input("Enter offspring percent: "))
 maxGen = int(input("Enter max generation number: "))
 crossoverProb = float(input("Enter Crossover Probability: "))
 mutaionProb = float(input("Enter Mutation Probability: "))
-reproduction(indivSize, crossoverProb, mutaionProb, persons, person_fitness, parentPercent, offspringPercent)
+TabuSize = int(input("Enter Tabu Size: "))
+MaxSideWay = int(input("Enter Max Sizeway: "))
+MaxImprove = int(input("Enter Max Improve: "))
+
+while maxGen > 0:
+    print("=========================================== maxGen: ", maxGen)
+    person_fitness = []
+    print("Persons: ", persons)
+    for person in persons:
+        person_fitness.append(knapsnack(person))
+    print("Person Fitness: ", person_fitness)
+    children = reproduction(crossoverProb, mutaionProb, persons, person_fitness, parentPercent, offspringPercent)
+    print("Children: ", children)
+    improved_children = []
+    for child in children:
+        tabu = []
+        improved_children.append(hill_climbing(child, 0, 0, tabu))
+    persons = persons + improved_children
+
+    maxGen -= 1
