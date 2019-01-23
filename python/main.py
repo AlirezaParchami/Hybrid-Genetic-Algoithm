@@ -30,7 +30,8 @@ def reproduction(indiv_size, cross_prob, mut_prob, persons, person_fitness, pare
     print("SP: ", SP)
     for x in SP:
         x[0], x[1] = crossover(cross_prob, indiv_size, x[0], x[1])
-
+        x[0] = mutation(mut_prob, indivSize, x[0])
+        x[1] = mutation(mut_prob, indivSize, x[1])
         children.append(x[0])
         children.append(x[1])
     return children
@@ -44,6 +45,21 @@ def crossover(cross_prob, length, first, second):
         second = second[:crossover_points[0]] + first[crossover_points[0]:crossover_points[1]] + second[crossover_points[1]:]
         first = first[:crossover_points[0]] + tmp[crossover_points[0]:crossover_points[1]] + first[crossover_points[1]:]
     return first, second
+
+
+def mutation(mut_prob, length, string):
+    print("-------------- Mutation of ", string)
+    for i in range(0, len(string)):
+        if random.uniform(0, 1) < mut_prob:
+            if string[i] == "0":
+                string = string[:i] + "1" + string[i+1:]
+            elif string[i] == "1":
+                string = string[:i] + "0" + string[i + 1:]
+            else:
+                print("Something is Wrong. The ", i, " in string ", string, " is ", string[i])
+            print("Mutation Done")
+    print("-----------String after: ", string, "\n")
+    return string
 
 
 def knapsnack(x):  # fn: file name
@@ -136,5 +152,3 @@ maxGen = int(input("Enter max generation number: "))
 crossoverProb = float(input("Enter Crossover Probability: "))
 mutaionProb = float(input("Enter Mutation Probability: "))
 reproduction(indivSize, crossoverProb, mutaionProb, persons, person_fitness, parentPercent, offspringPercent)
-
-# reproduction(persons[0], persons[1])
