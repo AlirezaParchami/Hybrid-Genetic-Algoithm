@@ -3,6 +3,8 @@ import random
 import math
 from random import randint
 
+filename = ""
+
 
 def individual_generation(indiv_size):
     """create stochastic individuals"""
@@ -21,19 +23,31 @@ def population_generation(pop_size, indiv_size):
     return myList
 
 
-def reproduction(x, y):
-    """Reproduce an individual from x and y"""
-    individual_length = len(x)
-    # TODO: be careful about the range of crossover_point. maybe randint(0, individual_length)
-    crossover_point = randint(0, individual_length)
-    individual = x[:crossover_point] + y[crossover_point:]
-    print("x=", x, "y=", y, "individual=" ,individual, "CrossoverPoint=",crossover_point)
-    return individual
+def reproduction(indiv_size, cross_prob, mut_prob, persons, person_fitness, parentPercent, offspringPercent):
+    # Select parents, crossover, mutation
+    children = []
+    SP = parent_selection(persons, person_fitness, parentPercent, offspringPercent)  # Selected Parents
+    print("SP: ", SP)
+    for x in SP:
+        x[0], x[1] = crossover(cross_prob, indiv_size, x[0], x[1])
+
+        children.append(x[0])
+        children.append(x[1])
+    return children
 
 
-def knapsnack(x, fn):
+def crossover(cross_prob, length, first, second):
+    if random.uniform(0, 1) < cross_prob:
+        crossover_points = random.sample(range(1, length), 2)
+        crossover_points.sort()
+        tmp = second
+        second = second[:crossover_points[0]] + first[crossover_points[0]:crossover_points[1]] + second[crossover_points[1]:]
+        first = first[:crossover_points[0]] + tmp[crossover_points[0]:crossover_points[1]] + first[crossover_points[1]:]
+    return first, second
+
+
+def knapsnack(x):  # fn: file name
     # Open file
-    filename = "..//Dataset//" + fn + ".txt"
     data = open(filename, "r")
     # Read first line and detect the number and MaxWeight
     first_line = data.readline().split(" ")
@@ -54,6 +68,7 @@ def knapsnack(x, fn):
             sum_value += values[i]
     if sum_weight > max_weight:
         sum_value = 0
+    data.close()
     return sum_value
 
 
@@ -87,21 +102,39 @@ def parent_selection(persons, person_fitness, parentPercent, offspringPercent):
     return selected_parents
 
 
+"""
+for i in range(0, 3):
+    print(i)
+# 0 1 2    
+a = "0123456789"
+print(a[:0])
+# 
+print(a[:1])
+# 0
+print(a[:4])
+# 0 1 2 3
+print(a[1:4])
+# 1 2 3
+print(a[1:])
+# 1 2 3 4 5 6 7 8 9
 
+"""
 indivSize = int(input("Enter the length of Individual: "))
 popSize = int(input("Enter the number of population: "))
 persons = population_generation(popSize, indivSize)
 print("persons= ", persons)
 
-fn = input("Enter the name of your file: ")
+filename = input("Enter the name of your file: ")
+filename = "..//Dataset//" + filename + ".txt"
 person_fitness = []
 for person in persons:
-    person_fitness.append(knapsnack(person, fn))
+    person_fitness.append(knapsnack(person))
 
 parentPercent = float(input("Enter parent percent: "))
 offspringPercent = float(input("Enter offspring percent: "))
 maxGen = int(input("Enter max generation number: "))
 crossoverProb = float(input("Enter Crossover Probability: "))
 mutaionProb = float(input("Enter Mutation Probability: "))
-SP = parent_selection(persons, person_fitness, parentPercent, offspringPercent)  # Selected Parents
+reproduction(indivSize, crossoverProb, mutaionProb, persons, person_fitness, parentPercent, offspringPercent)
+
 # reproduction(persons[0], persons[1])
