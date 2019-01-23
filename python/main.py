@@ -155,6 +155,17 @@ def hill_climbing(mychild, improve, sideway, tabu):
     return improved_child
 
 
+def replacement(persons_list):
+    tmp = []
+    for person in persons_list:
+        x = (person, knapsnack(person))
+        tmp.append(x)
+    tmp.sort(key= lambda tup: tup[1])
+    tmp.reverse()
+    selected = []
+    for i in range(0, popSize):
+        selected.append(tmp[i][0])
+    return selected
 
 
 """
@@ -204,5 +215,5 @@ while maxGen > 0:
         tabu = []
         improved_children.append(hill_climbing(child, 0, 0, tabu))
     persons = persons + improved_children
-
+    persons = replacement(persons)
     maxGen -= 1
