@@ -85,11 +85,32 @@ def break_class():
                 i[1] -= tmp[0]
                 Courses.append(new_course)
 
+def available_profs(course):
+    Availables = []
+    for prof in range(0,len(Profs)):
+        if course[0] in Profs[prof]:
+            Availables.append(prof)
+    return Availables
+
+def available_room(course):
+    Availables = []
+    for room in range(0,len(Rooms)):
+        if course[1] == Rooms[room][1]:
+            Availables.append(room)
+    return Availables
 
 
-
-
-
+def generate_persons():
+    persons = []
+    for course in range(0, len(Courses)):
+        person = ""
+        prof = available_profs(Courses[course])
+        prof = prof[random.randint(0, len(prof)-1)]
+        prof = bin(prof)[2:]
+        lesson = bin(course)[2:]
+        room = available_room(Courses[course])
+        room = room[random.randint(0, len(room)-1)]
+        room = bin(room)[2:]
 
 
 
