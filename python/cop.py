@@ -138,7 +138,6 @@ def generate_persons():
     persons = []
     for course in range(0, len(Courses)):
         print("========================================== ", course)
-        person = ""
         prof = available_profs(Courses[course])
         prof = prof[random.randint(0, len(prof)-1)]
         room = available_room(Courses[course])
@@ -151,12 +150,8 @@ def generate_persons():
         print("day: ", day)
         print("time: ", time)
         prof_room[prof][room] = 1
-        prof = ("{0:0" + str(Profs_bit_num) + "b}").format(prof)  # prof = bin(prof)[2:]
-        lesson = ("{0:0" + str(Courses_bit_num) + "b}").format(course)  # lesson = bin(course)[2:]
-        room = ("{0:0" + str(Rooms_bit_num) + "b}").format(room)  # room = bin(room)[2:]
-        day = ("{0:0" + str(Day_bit_num) + "b}").format(day)  # day = bin(day)[2:]
-        time = ("{0:0" + str(Time_bit_num) + "b}").format(time)  # time = bin(time)[2:]
-        person = prof + lesson + room + day + time
+        person = Person(prof, course, room, day, time)
+        person.toBit(Profs_bit_num, Courses_bit_num, Rooms_bit_num, Day_bit_num, Time_bit_num)
         persons.append(person)
     return persons
 
@@ -171,7 +166,7 @@ def fill_Times():
             Times.append(tmp)
 
 
-def num_days(person):
+def num_days():
     days = 0
     for i in prof_times:
         for j in i:
@@ -180,7 +175,7 @@ def num_days(person):
     return days
 
 
-def num_rooms(person):
+def num_rooms():
     rooms = 0
     for i in prof_room:
         for j in i:
@@ -202,28 +197,47 @@ def Total_time_a_day():
 def sdt(hours):
     return np.var(hours)
 
+
 def dist():
-    for person in persons:
+    distance = 0
+    classes = []
+    #for sep in Separates:
+    #    tmp = []
+    #    for person in persons:
+    #        if Co#urses[person.course][0] in sep and Courses[person.course][0] not in tmp:
+
+
+    return 0
 
 
 
 def fitness(person):
-    days = num_days(person)
-    rooms = num_rooms(person)
+    days = num_days()
+    rooms = num_rooms()
     hours = Total_time_a_day()
     variance = sdt(hours)
+    distance = dist()
+    fit = (a1*days) + (a2*rooms) + (a3*variance) + (a4*distance)
+    return fit
 
 
 class Person:
-    def __init__(self, prof, course, room, day, time, duration):
-        self.professor = prof
+    def __init__(self, professor, course, room, day, time):
+        self.professor = professor
         self.course = course
         self.room = room
         self.day = day
         self.time = time
-        self.duration = duration
 
-    def toBit(self, ):
+    def toBit(self, prof_bit_num, course_bit_num, room_bit_num, day_bit_num, time_bit_num):
+        self.professor_bit = ("{0:0" + str(prof_bit_num) + "b}").format(self.professor)  # prof = bin(prof)[2:]
+        self.course_bit = ("{0:0" + str(course_bit_num) + "b}").format(self.course)  # lesson = bin(course)[2:]
+        self.room_bit = ("{0:0" + str(room_bit_num) + "b}").format(self.room)  # room = bin(room)[2:]
+        self.day_bit = ("{0:0" + str(day_bit_num) + "b}").format(self.day)  # day = bin(day)[2:]
+        self.time_bit = ("{0:0" + str(time_bit_num) + "b}").format(self.time)  # time = bin(time)[2:]
+        self.person_bit = self.professor + self.course + self.room + self.day + self.time
+
+
 filename = input("Enter File name: ")
 read_file()
 fill_Times()
@@ -249,7 +263,8 @@ print("Courses: ", Courses)
 persons = generate_persons()
 print("prof bit: ", Profs_bit_num, " Course bit: ", Courses_bit_num, " Room bit: ", Rooms_bit_num,
       " Day: ", Day_bit_num, " Time bit: ", Time_bit_num)
-print("Persons: ", persons)
-
 for person in persons:
-    fitness(person)
+    print("Persons: ", person.professor)
+
+#for person in persons:
+#    fitness(person)

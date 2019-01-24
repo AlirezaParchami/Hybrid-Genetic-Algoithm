@@ -6,6 +6,7 @@ from random import randint
 filename = ""
 data = []
 
+
 def individual_generation(indiv_size):
     """create stochastic individuals"""
     s = ""
