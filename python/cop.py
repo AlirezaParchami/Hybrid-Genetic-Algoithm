@@ -8,6 +8,7 @@ Times = []
 Rooms = []
 Span = []
 Separates = []
+Days = 5
 Profs_bit_num = 0
 Courses_bit_num = 0
 Rooms_bit_num = 0
@@ -149,6 +150,7 @@ def generate_persons():
         print("room: ", Rooms[room])
         print("day: ", day)
         print("time: ", time)
+        prof_room[prof][room] = 1
         prof = ("{0:0" + str(Profs_bit_num) + "b}").format(prof)  # prof = bin(prof)[2:]
         lesson = ("{0:0" + str(Courses_bit_num) + "b}").format(course)  # lesson = bin(course)[2:]
         room = ("{0:0" + str(Rooms_bit_num) + "b}").format(room)  # room = bin(room)[2:]
@@ -177,10 +179,51 @@ def num_days(person):
                 days += 1
     return days
 
+
+def num_rooms(person):
+    rooms = 0
+    for i in prof_room:
+        for j in i:
+            if j == 1:
+                rooms += 1
+    return rooms
+
+def Total_time_a_day():
+    hours = []
+    for i in range(0,Days):
+        hours.append(0)
+    for i in range(0, len(Profs)):
+        for j in range(0, Days):
+            for k in range(0, Span[1]-Span[0]):
+                hours[j] += prof_times[i][j][k]
+    return hours
+
+
+def sdt(hours):
+    return np.var(hours)
+
+def dist():
+    for person in persons:
+
+
+
 def fitness(person):
     days = num_days(person)
+    rooms = num_rooms(person)
+    hours = Total_time_a_day()
+    variance = sdt(hours)
 
 
+class Person:
+    def __init__(self, prof, course, room, day, time, duration):
+        self.professor = prof
+        self.course = course
+        self.room = room
+        self.day = day
+        self.time = time
+        self.duration = duration
+
+    def toBit(self, ):
 filename = input("Enter File name: ")
 read_file()
 fill_Times()
@@ -199,8 +242,9 @@ print("Span: ", Span)
 print("Separates: ", Separates)
 break_class()
 size = find_indivsize()
-prof_times = np.random.randint(1, size=(len(Profs), 5, Span[1]-Span[0]) )
-room_times = np.random.randint(1, size=(len(Rooms), 5, Span[1]-Span[0]) )
+prof_times = np.random.randint(1, size=(len(Profs), Days, Span[1]-Span[0]) )
+room_times = np.random.randint(1, size=(len(Rooms), Days, Span[1]-Span[0]) )
+prof_room = np.random.randint(1, size=(len(Profs), len(Rooms)) )
 print("Courses: ", Courses)
 persons = generate_persons()
 print("prof bit: ", Profs_bit_num, " Course bit: ", Courses_bit_num, " Room bit: ", Rooms_bit_num,
