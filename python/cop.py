@@ -365,7 +365,7 @@ class Person:
     persons = []
 
 
-class Answer:
+class Population:
     def __init__(self, Profs_size, Days_size, Span_size, Rooms_size):
         self.prof_times = np.random.randint(1, size=(Profs_size, Days_size, Span_size))
         self.room_times = np.random.randint(1, size=(Rooms_size, Days_size, Span_size))
@@ -373,8 +373,81 @@ class Answer:
         self.persons = []
         self.fitness = 0
 
+def parent_selection_cop(pops):
+    fitness_percent = []
+    fitness_sum = 0
+    for x in pops:
+        fitness_sum += x.fitness
+    tmp = 0
+    for x in pops:
+        tmp += (x.fitness)/fitness_sum
+        fitness_percent.append(tmp)
 
-def reproduction(ans):
+    candidate_parents = []
+    for i in range(0, int(math.floor(parentPercent*len(pops)))):
+        prob = random.uniform(0, 1)
+        for j in range(0, len(fitness_percent)):
+            if prob < fitness_percent[j]:
+                candidate_parents.append(pops[j])
+                break
+
+    selected_parents = []
+    for i in range(0, int(math.floor(offspringPercent*len(pops)/2)))
+        index1 = random.randint(0, len(candidate_parents)-1 )
+        index2 = random.randint(0, len(candidate_parents)-1 )
+        pair = []
+        pair.append(candidate_parents[index1])
+        pair.append(candidate_parents[index2])
+        selected_parents.append(pair)
+    return selected_parents
+
+
+def crossover_cop(first_pop, second_pop):
+    if random.uniform(0, 1) > crossoverPercent:
+        return first_pop, second_pop
+    rands = random.sample(range( 1, min(len(first_pop.persons),len(second_pop.persons))-1 ), 2)
+    rands.sort()
+    tmp = []
+    tmp = first_pop.persons[rands[0]:rands[1]]
+    first_pop.persons[rands[0]:rands[1]] = second_pop.persons[rands[0]:rands[1]]
+    second_pop.persons[rands[0]:rands[1]] = tmp
+    """
+    one_list.append(one.professor)
+    one_list.append(one.course)
+    one_list.append(one.room)
+    one_list.append(one.day)
+    one_list.append(one.time)
+    two_list.append(two.professor)
+    two_list.append(two.course)
+    two_list.append(two.room)
+    two_list.append(two.day)
+    two_list.append(two.time)
+    tmp_list = copy.copy(one_list)
+    # new_one = one[:rands[0]] + two[rands[0]:rands[1]] + one[rands[1]:]
+    for i in range(rands[0], rands[1]):
+        one_list[i] = two_list[i]
+    # new_two = two[:rands[0]] + one[rands[0]:rands[1]] + two[rands[1]:]
+    for i in range(rands[0], rands[1]):
+        two_list[i] = tmp_list[i]
+    
+    new_one = Person(one_list[0], one_list[1], one_list[2], one_list[3], one_list[4])
+    new_two = Person(two_list[0], two_list[1], two_list[2], two_list[3], two_list[4])
+    """
+    return first_pop, second_pop
+
+
+
+
+
+
+def reproduction_cop(pops):
+    children = []
+    SP = parent_selection_cop(pops)  # A list of tuples
+    for pair in SP:
+        pair[0], pair[1] = crossover_cop(pair[0].persons, pair[1].persons)
+        for item in pair[0]:
+            mutation(item.persons)
+
 
 filename = input("Enter File name: ")
 read_file()
@@ -384,6 +457,9 @@ a1 = float(input("a1: "))
 a2 = float(input("a2: "))
 a3 = float(input("a3: "))
 a4 = float(input("a4: "))
+parentPercent = float(input("Enter parent Percent: "))
+offspringPercent = float(input("Enter offspring Percent: "))
+crossoverPercent = float(input("Enter crossover Percent"))
 mutationProb = float(input("Enter Mutation Prob: "))
 
 print("Profs: ", Profs)
@@ -402,12 +478,9 @@ print("Courses: ", Courses)
 maxGen = int(input("Enter The maximum Generation: "))
 populationS = []
 for g in range(0, maxGen):
-    population = Answer(len(Profs), Days, Span[1]-Span[0], len(Rooms))
+    population = Population(len(Profs), Days, Span[1]-Span[0], len(Rooms))
     population.persons = generate_persons(population)
     population.fitness = fitness(population)
     populationS.append(population)
 
-for i in range(0, len(population.persons)):
-    a = mutation(population.persons[i], population)
-#for person in persons:
-#    fitness(person)
+
