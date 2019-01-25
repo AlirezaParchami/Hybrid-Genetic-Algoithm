@@ -130,8 +130,27 @@ def available_time(course, prof, room, day):
     for k in range(i, i+hours):
         room_times[room][day][k] = 1
         prof_times[prof][day][k] = 1
-
     return i, day
+
+def optimum_day_for_prof(prof):
+    # Optimization Condition 1
+    days = []
+    for i in range(0, 5):
+        tmp = 0
+        for j in range(0, Span[1]-Span[0]):
+            if prof_times[prof][i][j] == 1:
+                tmp +=1
+        days.append(tmp)
+    for i in range(0, len(days)):
+        if i>0 and i<Span[1]-Span[0]:
+            return i
+    # Optimization Condition 2
+    total_hours_in_day = Total_time_a_day()
+    max_index = total_hours_in_day.index(max(total_hours_in_day))
+    if total_hours_in_day[max_index] != 0:
+        return total_hours_in_day.index(min(total_hours_in_day))
+    # Return random index
+    return random.randint(0, len(days)-1)
 
 
 
@@ -143,7 +162,7 @@ def generate_persons():
         prof = prof[random.randint(0, len(prof)-1)]
         room = available_room(Courses[course])
         room = room[random.randint(0, len(room)-1)]
-        day = 0  # day = random.randint(0, 4)
+        day = optimum_day_for_prof(prof)
         time, day = available_time(Courses[course], prof, room, day)
         print("course: ", Courses[course])
         print("prof: ", Profs[prof])
