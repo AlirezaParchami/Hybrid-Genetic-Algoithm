@@ -137,7 +137,6 @@ def neighbor_values(mychild):
 
 
 def hill_climbing(mychild, improve, sideway, tabu):
-
     #print("------------Local search: ", mychild)
     if improve > MaxImprove:
         return mychild
@@ -191,73 +190,52 @@ def read_file():
         tmp = (int(splited_data[0]), int(splited_data[1]))
         data.append(tmp)
 
+def same_persons(persons):
+    same = True
+    for i in range(0, len(persons)):
+        if persons[0] != persons[i]:
+            same = False
+            return same
+    return same
 
-def heuristic():
-    heuristic_values = []
-    for x in persons:
-        tmp = (x, abs(knapsnack(x)-optimum_value)/maxWeight)
-        heuristic_values.append(tmp)
-    heuristic_values.sort(key=lambda tup: tup[1])
+
+finfuncstart = 0
+indivSize = int(input("Enter the length of Individual: "))
+popSize = int(input("Enter the number of population: "))
+persons = population_generation(popSize, indivSize)
+print("persons= ", persons)
+filename = input("Enter the name of your file: ")
+filename = "..//Dataset//" + filename + ".txt"
+parentPercent = float(input("Enter parent percent: "))
+offspringPercent = float(input("Enter offspring percent: "))
+maxGen = int(input("Enter max generation number: "))
+crossoverProb = float(input("Enter Crossover Probability: "))
+mutaionProb = float(input("Enter Mutation Probability: "))
+TabuSize = int(input("Enter Tabu Size: "))
+MaxSideWay = int(input("Enter Max Sizeway: "))
+MaxImprove = int(input("Enter Max Improve: "))
+read_file()
+
+while maxGen > 0:
+    person_fitness = []
+    #print("Persons: ", persons)
+    for person in persons:
+        person_fitness.append(knapsnack(person))
+    #print("Person Fitness: ", person_fitness)
+    children = reproduction(crossoverProb, mutaionProb, persons, person_fitness, parentPercent, offspringPercent)
+    #print("Children: ", children)
+    improved_children = []
+    for child in children:
+        tabu = []
+        improved_children.append(hill_climbing(child, 0, 0, tabu))
+    persons = persons + improved_children
+    persons, average = replacement(persons)
+    if same_persons(persons):
+        break
+    maxGen -= 1
 
 
-
-mode = int(input("Enter Mode: 1-Genetic 2-A* : "))
-if mode == 1:
-    finfuncstart = 0
-    indivSize = int(input("Enter the length of Individual: "))
-    popSize = int(input("Enter the number of population: "))
-    persons = population_generation(popSize, indivSize)
-    print("persons= ", persons)
-
-    filename = input("Enter the name of your file: ")
-    filename = "..//Dataset//" + filename + ".txt"
-    parentPercent = float(input("Enter parent percent: "))
-    offspringPercent = float(input("Enter offspring percent: "))
-    maxGen = int(input("Enter max generation number: "))
-    crossoverProb = float(input("Enter Crossover Probability: "))
-    mutaionProb = float(input("Enter Mutation Probability: "))
-    TabuSize = int(input("Enter Tabu Size: "))
-    MaxSideWay = int(input("Enter Max Sizeway: "))
-    MaxImprove = int(input("Enter Max Improve: "))
-    read_file()
-    #print("DATA: ", data)
-    while maxGen > 0:
-        #print("=========================================== maxGen: ", maxGen)
-        person_fitness = []
-        #print("Persons: ", persons)
-        for person in persons:
-            person_fitness.append(knapsnack(person))
-        #print("Person Fitness: ", person_fitness)
-        children = reproduction(crossoverProb, mutaionProb, persons, person_fitness, parentPercent, offspringPercent)
-        #print("Children: ", children)
-        improved_children = []
-        for child in children:
-            tabu = []
-            improved_children.append(hill_climbing(child, 0, 0, tabu))
-        persons = persons + improved_children
-        persons, average = replacement(persons)
-        maxGen -= 1
-
-    print("BEST Person: ", persons[0])
-    print("Best Person Fitness: ", knapsnack(persons[0]))
-    print("Fitness average: ", average)
-elif mode ==2:  # A* Algorithm
-    filename = input("Enter the name of your file: ")
-    filename = "..//Dataset//" + filename + ".txt"
-    read_file()
-    persons = []
-    optimum_value = 0
-    if filename == "ks_20_878":
-        optimum_value = 1024
-    elif filename == "ks_100_997":
-        optimum_value = 2397
-    elif filename == "ks_200_1008":
-        optimum_value = 1634
-    else:
-        print("Something is wrong in filename")
-    maxWeight = data[0][1]
-    path = []
-    while goal_test(path):
-        heuristic()
-
+print("BEST Person: ", persons[0])
+print("Best Person Fitness: ", knapsnack(persons[0]))
+print("Fitness average: ", average)
 

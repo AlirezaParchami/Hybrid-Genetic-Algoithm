@@ -74,7 +74,6 @@ def find_indivsize():
     size = Profs_bit_num + Courses_bit_num + Rooms_bit_num + Day_bit_num + Time_bit_num
     return size
 
-
 def break_class():
     global Courses
     tmp = []
@@ -109,7 +108,7 @@ def available_room(course):
     return Availables
 
 
-def available_time(course, prof, room, day):
+def available_time(course, prof, room, day, ans):
     Available = []
     hours = 0
     for i in Times:
@@ -121,31 +120,32 @@ def available_time(course, prof, room, day):
         for i in range(0, (Span[1]-Span[0])-hours):
             x = True
             for j in range(i, i+hours):
-                if room_times[room][day][j] == 1 or prof_times[prof][day][j] == 1:
+                if ans.room_times[room][day][j] == 1 or ans.prof_times[prof][day][j] == 1:
                     x = False
             if x == True:
                 break
         if x == False:
             day = (day + 1) % 5
     for k in range(i, i+hours):
-        room_times[room][day][k] = 1
-        prof_times[prof][day][k] = 1
+        ans.room_times[room][day][k] = 1
+        ans.prof_times[prof][day][k] = 1
     return i, day
 
-def optimum_day_for_prof(prof):
+
+def optimum_day_for_prof(prof, ans):
     # Optimization Condition 1
     days = []
-    for i in range(0, 5):
+    for i in range(0, Days):
         tmp = 0
         for j in range(0, Span[1]-Span[0]):
-            if prof_times[prof][i][j] == 1:
+            if ans.prof_times[prof][i][j] == 1:
                 tmp +=1
         days.append(tmp)
     for i in range(0, len(days)):
-        if i>0 and i<Span[1]-Span[0]:
+        if i > 0 and i < Span[1]-Span[0]:
             return i
     # Optimization Condition 2
-    total_hours_in_day = Total_time_a_day()
+    total_hours_in_day = Total_time_a_day(ans)
     max_index = total_hours_in_day.index(max(total_hours_in_day))
     if total_hours_in_day[max_index] != 0:
         return total_hours_in_day.index(min(total_hours_in_day))
@@ -154,32 +154,33 @@ def optimum_day_for_prof(prof):
 
 
 # Optimization Condition 3
-def optimum_room_for_professor(prof, rooms):
-    howmany_times_professor_room = copy.copy(prof_room)
+def optimum_room_for_professor(prof, rooms, ans):
+    howmany_times_professor_room = copy.copy(ans.prof_room)
     for i in range(0, len(howmany_times_professor_room)):
-        max_index = howmany_times_professor_room.argmax()
+        max_index = howmany_times_professor_room[prof].argmax()
         if max_index in rooms:
             return max_index
-        howmany_times_professor_room[max_index] = -1
-    return random.randint(0, len(rooms)-1)
+        howmany_times_professor_room[prof][max_index] = 0
+    return rooms[random.randint( 0, len(rooms)-1 )]
 
 
-def generate_persons():
+def generate_persons(ans):
     persons = []
     for course in range(0, len(Courses)):
         print("========================================== ", course)
         prof = available_profs(Courses[course])
+        # Select random professor because we don't have any optimization condition
         prof = prof[random.randint(0, len(prof)-1)]
         room = available_room(Courses[course])
-        room = optimum_room_for_professor(prof, room) # room[random.randint(0, len(room)-1)]
-        day = optimum_day_for_prof(prof)
-        time, day = available_time(Courses[course], prof, room, day)
+        room = optimum_room_for_professor(prof, room, ans)  # room[random.randint(0, len(room)-1)]
+        day = optimum_day_for_prof(prof, ans)
+        time, day = available_time(Courses[course], prof, room, day, ans)
         print("course: ", Courses[course])
         print("prof: ", Profs[prof])
         print("room: ", Rooms[room])
         print("day: ", day)
         print("time: ", time)
-        prof_room[prof][room] = 1
+        ans.prof_room[prof][room] += 1
         person = Person(prof, course, room, day, time)
         person.toBit(Profs_bit_num, Courses_bit_num, Rooms_bit_num, Day_bit_num, Time_bit_num)
         persons.append(person)
@@ -196,32 +197,32 @@ def fill_Times():
             Times.append(tmp)
 
 
-def num_days():
+def num_days(ans):
     days = 0
-    for i in prof_times:
+    for i in ans.prof_times:
         for j in i:
             if 1 in j:
                 days += 1
     return days
 
 
-def num_rooms():
+def num_rooms(ans):
     rooms = 0
-    for i in prof_room:
+    for i in ans.prof_room:
         for j in i:
             if j == 1:
                 rooms += 1
     return rooms
 
 
-def Total_time_a_day():
+def Total_time_a_day(ans):
     hours = []
     for i in range(0,Days):
         hours.append(0)
     for i in range(0, len(Profs)):
         for j in range(0, Days):
             for k in range(0, Span[1]-Span[0]):
-                hours[j] += prof_times[i][j][k]
+                hours[j] += ans.prof_times[i][j][k]
     return hours
 
 
@@ -239,10 +240,10 @@ def dist():
     return 0
 
 
-def fitness(person):
-    days = num_days()
-    rooms = num_rooms()
-    hours = Total_time_a_day()
+def fitness(ans):
+    days = num_days(ans)
+    rooms = num_rooms(ans)
+    hours = Total_time_a_day(ans)
     variance = sdt(hours)
     distance = dist()
     fit = (a1*days) + (a2*rooms) + (a3*variance) + (a4*distance)
@@ -259,7 +260,7 @@ def switch_char(index, child):
     return child
 
 
-def check_condition(person):
+def check_condition(person, ans):
     check = True
     if person.professor >= len(Profs) or person.course >= len(Courses) or person.room >= len(Rooms) or person.day >= Days or person.time >= Span[1]-Span[0]:
         check = False
@@ -280,17 +281,17 @@ def check_condition(person):
             t = Times[i][1]
             break
     for i in range(person.time, person.time + t ):
-        if prof_times[person.professor][person.day][i] == 1:
+        if ans.prof_times[person.professor][person.day][i] == 1:
             check = False
             return check
     # The room should be free in that day and time
     for i in range(person.time, person.time + t ):
-        if room_times[person.room][person.day][i] == 1:
+        if ans.room_times[person.room][person.day][i] == 1:
             check = False
     return check
 
 
-def mutation(person):
+def mutation(person, ans):
     # Professor Mutation
     for i in range(0, len(person.professor_bit)):
         if random.uniform(0, 1) < mutationProb:
@@ -299,7 +300,7 @@ def mutation(person):
             p = copy.copy(person)
             p.professor = tmp
             p.professor_bit = tmp_bit
-            if check_condition(p) == True:
+            if check_condition(p, ans) == True:
                 person.professor_bit = tmp_bit
                 person.professor = tmp
     # Course Mutation
@@ -310,7 +311,7 @@ def mutation(person):
             p = copy.copy(person)
             p.course = tmp
             p.course_bot = tmp_bit
-            if check_condition(p) == True:
+            if check_condition(p, ans) == True:
                 person.course_bit = tmp_bit
                 person.course = tmp
     for i in range(0, len(person.room_bit)):
@@ -320,7 +321,7 @@ def mutation(person):
             p = copy.copy(person)
             p.room = tmp
             p.room_bit = tmp_bit
-            if check_condition(p) == True:
+            if check_condition(p, ans) == True:
                 person.room = tmp
                 person.room_bit = tmp_bit
     for i in range(0, len(person.day_bit)):
@@ -330,7 +331,7 @@ def mutation(person):
             p = copy.copy(person)
             p.day_bit = tmp_bit
             p.day = tmp
-            if check_condition(p) == True:
+            if check_condition(p, ans) == True:
                 person.day = tmp
                 person.day_bit = tmp_bit
     for i in range(0, len(person.time_bit)):
@@ -340,7 +341,7 @@ def mutation(person):
             p = copy.copy(person)
             p.time_bit = tmp_bit
             p.time = tmp
-            if check_condition(p) == True:
+            if check_condition(p, ans) == True:
                 person.time = tmp
                 person.time_bit = tmp_bit
     return person
@@ -361,7 +362,19 @@ class Person:
         self.day_bit = ("{0:0" + str(day_bit_num) + "b}").format(self.day)  # day = bin(day)[2:]
         self.time_bit = ("{0:0" + str(time_bit_num) + "b}").format(self.time)  # time = bin(time)[2:]
         self.person_bit = self.professor + self.course + self.room + self.day + self.time
+    persons = []
 
+
+class Answer:
+    def __init__(self, Profs_size, Days_size, Span_size, Rooms_size):
+        self.prof_times = np.random.randint(1, size=(Profs_size, Days_size, Span_size))
+        self.room_times = np.random.randint(1, size=(Rooms_size, Days_size, Span_size))
+        self.prof_room = np.random.randint(1, size=(Profs_size, Rooms_size))
+        self.persons = []
+        self.fitness = 0
+
+
+def reproduction(ans):
 
 filename = input("Enter File name: ")
 read_file()
@@ -372,6 +385,7 @@ a2 = float(input("a2: "))
 a3 = float(input("a3: "))
 a4 = float(input("a4: "))
 mutationProb = float(input("Enter Mutation Prob: "))
+
 print("Profs: ", Profs)
 print("Courses: ", Courses)
 print("Rooms: ", Rooms)
@@ -380,26 +394,20 @@ print("Times: ", Times)
 # During
 print("Span: ", Span)
 print("Separates: ", Separates)
+
 break_class()
 size = find_indivsize()
-prof_times = np.random.randint(1, size=(len(Profs), Days, Span[1]-Span[0]) )
-room_times = np.random.randint(1, size=(len(Rooms), Days, Span[1]-Span[0]) )
-prof_room = np.random.randint(1, size=(len(Profs), len(Rooms)) )
 print("Courses: ", Courses)
-persons = generate_persons()
-print("=================================================")
-print("prof bit: ", Profs_bit_num, " Course bit: ", Courses_bit_num, " Room bit: ", Rooms_bit_num,
-      " Day: ", Day_bit_num, " Time bit: ", Time_bit_num)
-for i in range(0, len(persons)):
-    print("========= ", i)
-    a = mutation(persons[i])
-    print("Mutated professor: ", Profs[a.professor])
-    print("Mutated course: ", Courses[a.course])
-    print("Mutated room: ", Rooms[a.room])
-    print("Mutated day: ", a.day)
-    print("Mutated time: ", a.time)
-    print("")
 
+maxGen = int(input("Enter The maximum Generation: "))
+populationS = []
+for g in range(0, maxGen):
+    population = Answer(len(Profs), Days, Span[1]-Span[0], len(Rooms))
+    population.persons = generate_persons(population)
+    population.fitness = fitness(population)
+    populationS.append(population)
 
+for i in range(0, len(population.persons)):
+    a = mutation(population.persons[i], population)
 #for person in persons:
 #    fitness(person)
