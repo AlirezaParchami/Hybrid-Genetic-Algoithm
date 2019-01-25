@@ -1,5 +1,16 @@
 filename = ""
 data = []
+maxWeight = 0
+optimum_value = 0
+
+class Node:
+    def __init__(self, string):
+        self.string = string
+        self.parent = None
+        self.H = 0
+        self.G = 0
+        self.weight = 0
+
 
 def read_file():
     d = open(filename, "r")
@@ -12,8 +23,6 @@ def read_file():
         data.append(tmp)
 
 def knapsnack(x):
-    global finfuncstart
-    finfuncstart += 1
     # Read first line and detect the number and MaxWeight
     numbers = data[0][0]
     max_weight = data[0][1]
@@ -33,33 +42,101 @@ def knapsnack(x):
     #print("SUM Value: ", sum_value)
     if sum_weight > max_weight:
         sum_value = 0
-    return sum_value
+    return sum_value, sum_weight
 
 
-def goal_test():
-    sum = 0
-    for i in path:
-        sum += i[1]
-    if sum < optimum_value or sum > optimum_value:
-        return False
-    elif sum == optimum_value:
+def heuristic(cand):
+    cand.sort(key=lambda x: x.actual_cost + x.estimated_cost)
+    cand.reverse()
+    return cand
+
+
+def switch_char(index, child):
+    if child[index] == "0":
+        child = child[:index] + "1" + child[index+1:]
+#    else:
+#        print("Something is Wrong. The ", index, " in string ", child, " is ", child[index])
+    return child
+
+
+def children(parent):
+    links = []
+    for i in range(0, len(parent.string)):
+        links.append(switch_char(i, parent.string))
+    return links
+
+def goal_t(current_node):
+    sum_value = current_node.G
+    sum_weight = current_node.weight
+    if sum_value >= optimum_value and sum_weight <= maxWeight:
         return True
+#    elif sum_weight > maxWeight:
+#        return 2
+#    elif sum_value < optimum_value or sum_value > optimum_value:
+#        return 0
+#    else:
+#        print("Something is Wrong in Goal Test")
+#        return 3
+    return False
 
-def heuristic():
-    heuristic_values = []
-    for x in persons:
-        tmp = (x, abs(knapsnack(x) - optimum_value) / maxWeight)
-        heuristic_values.append(tmp)
-    heuristic_values.sort(key=lambda tup: tup[1])
 
+def estimate(node):
+    current_value = 0
+    while node.parent:
+        current_value += node.G
+        node = node.parent
+    value = abs(current_value - optimum_value)
+    value = value / maxWeight
+    return value
+
+
+def Astar(start):
+    openset = set()
+    closeset = set()
+
+    current = start
+    openset.add(current)
+
+    while openset:
+        current = max(openset, key=lambda o:o.G + o.H)
+
+        if goal_t(current):
+            path = []
+            while current.parent:
+                path.append(current)
+                current = current.parent
+            path.append(current)
+            return path[::-1]
+
+        openset.remove(current)
+        closeset.add(current)
+
+        for child in children(current):
+            closeset_string = []
+            for i in closeset:
+                closeset_string.append(i.string)
+            if child in closeset_string:
+                continue
+
+            openset_string = []
+            for i in openset:
+                openset_string.append(i.string)
+            if child not in openset_string:
+                node = Node(child)
+                node.G, node.weight = knapsnack(node.string)
+                if node.weight <= maxWeight:
+                    node.parent = current
+                    node.H = estimate(current)
+                    openset.add(node)
+                else:
+                    closeset.add(node)
+
+    raise ValueError('No Path Found')
 
 
 filename = input("Enter the name of your file: ")
-filename = "..//Dataset//" + filename + ".txt"
-read_file()
-persons = []
-optimum_value = 0
 if filename == "ks_20_878":
+    #optimum_value = 136
     optimum_value = 1024
 elif filename == "ks_100_997":
     optimum_value = 2397
@@ -67,7 +144,19 @@ elif filename == "ks_200_1008":
     optimum_value = 1634
 else:
     print("Something is wrong in filename")
+filename = "..//Dataset//" + filename + ".txt"
+#indivSize = int(input("Enter the length of Individual: "))
+read_file()
+indivSize = data[0][0]
+
 maxWeight = data[0][1]
-path = []
-while goal_test(path):
-    heuristic()
+init = "0" * indivSize
+print("maxWeight: ", maxWeight)
+print("init: ", init)
+start_node = Node(init)
+path = Astar(start_node)
+print("Path: ")
+for i in path:
+    print("\nstring: ", i.string)
+    print("G: ", i.G)
+    print("weight: ", i.weight)

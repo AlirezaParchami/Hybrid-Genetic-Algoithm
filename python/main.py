@@ -200,15 +200,6 @@ def heuristic():
     heuristic_values.sort(key=lambda tup: tup[1])
 
 
-def goal_test():
-    sum = 0
-    for i in path:
-        sum += i[1]
-    if sum < optimum_value or sum > optimum_value:
-        return False
-    elif sum == optimum_value:
-        return True
-
 
 mode = int(input("Enter Mode: 1-Genetic 2-A* : "))
 if mode == 1:
