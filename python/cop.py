@@ -153,6 +153,16 @@ def optimum_day_for_prof(prof):
     return random.randint(0, len(days)-1)
 
 
+# Optimization Condition 3
+def optimum_room_for_professor(prof, rooms):
+    howmany_times_professor_room = copy.copy(prof_room)
+    for i in range(0, len(howmany_times_professor_room)):
+        max_index = howmany_times_professor_room.argmax()
+        if max_index in rooms:
+            return max_index
+        howmany_times_professor_room[max_index] = -1
+    return random.randint(0, len(rooms)-1)
+
 
 def generate_persons():
     persons = []
@@ -161,7 +171,7 @@ def generate_persons():
         prof = available_profs(Courses[course])
         prof = prof[random.randint(0, len(prof)-1)]
         room = available_room(Courses[course])
-        room = room[random.randint(0, len(room)-1)]
+        room = optimum_room_for_professor(prof, room) # room[random.randint(0, len(room)-1)]
         day = optimum_day_for_prof(prof)
         time, day = available_time(Courses[course], prof, room, day)
         print("course: ", Courses[course])
