@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import random
+import copy
 
 Profs = []
 Courses = []
@@ -94,7 +95,7 @@ def break_class():
 
 def available_profs(course):
     Availables = []
-    for prof in range(0,len(Profs)):
+    for prof in range(0, len(Profs)):
         if course[0] in Profs[prof]:
             Availables.append(prof)
     return Availables
@@ -183,6 +184,7 @@ def num_rooms():
                 rooms += 1
     return rooms
 
+
 def Total_time_a_day():
     hours = []
     for i in range(0,Days):
@@ -205,10 +207,7 @@ def dist():
     #    tmp = []
     #    for person in persons:
     #        if Co#urses[person.course][0] in sep and Courses[person.course][0] not in tmp:
-
-
     return 0
-
 
 
 def fitness(person):
@@ -219,6 +218,103 @@ def fitness(person):
     distance = dist()
     fit = (a1*days) + (a2*rooms) + (a3*variance) + (a4*distance)
     return fit
+
+
+def switch_char(index, child):
+    if child[index] == "1":
+        child = child[:index] + "0" + child[index+1:]
+    elif child[index] == "0":
+        child = child[:index] + "1" + child[index+1:]
+    else:
+        print("Something is Wrong. The ", index, " in string ", child, " is ", child[index])
+    return child
+
+
+def check_condition(person):
+    check = True
+    if person.professor >= len(Profs) or person.course >= len(Courses) or person.room >= len(Rooms) or person.day >= Days or person.time >= Span[1]-Span[0]:
+        check = False
+        return check
+    # The Professor should teach the course
+    available_professors = available_profs(Courses[person.course])
+    if Profs[person.professor][0] not in available_professors:
+        check = False
+        return check
+    # The class capacity should be equal or greater than course capcity
+    if Courses[person.course][1] > Rooms[person.room][1]:
+        check = False
+        return check
+    # Professor should be free in that day and time
+    t = 0
+    for i in range(0, len(Times)):
+        if Times[i][0] == Courses[person.course][0]:
+            t = Times[i][1]
+            break
+    for i in range(person.time, person.time + t ):
+        if prof_times[person.professor][person.day][i] == 1:
+            check = False
+            return check
+    # The room should be free in that day and time
+    for i in range(person.time, person.time + t ):
+        if room_times[person.room][person.day][i] == 1:
+            check = False
+    return check
+
+
+def mutation(person):
+    # Professor Mutation
+    for i in range(0, len(person.professor_bit)):
+        if random.uniform(0, 1) < mutationProb:
+            tmp = int(switch_char(i, person.professor_bit), 2)
+            tmp_bit = ("{0:0" + str(Profs_bit_num) + "b}").format(tmp)
+            p = copy.copy(person)
+            p.professor = tmp
+            p.professor_bit = tmp_bit
+            if check_condition(p) == True:
+                person.professor_bit = tmp_bit
+                person.professor = tmp
+    # Course Mutation
+    for i in range(0, len(person.course_bit)):
+        if random.uniform(0, 1) < mutationProb:
+            tmp = int(switch_char(i, person.course_bit), 2)
+            tmp_bit = ("{0:0" + str(Courses_bit_num) + "b}").format(tmp)
+            p = copy.copy(person)
+            p.course = tmp
+            p.course_bot = tmp_bit
+            if check_condition(p) == True:
+                person.course_bit = tmp_bit
+                person.course = tmp
+    for i in range(0, len(person.room_bit)):
+        if random.uniform(0, 1) < mutationProb:
+            tmp = int(switch_char(i, person.room_bit), 2)
+            tmp_bit = ("{0:0" + str(Rooms_bit_num) + "b}").format(tmp)
+            p = copy.copy(person)
+            p.room = tmp
+            p.room_bit = tmp_bit
+            if check_condition(p) == True:
+                person.room = tmp
+                person.room_bit = tmp_bit
+    for i in range(0, len(person.day_bit)):
+        if random.uniform(0,1) < mutationProb:
+            tmp = int(switch_char(i, person.day_bit), 2)
+            tmp_bit = ("{0:0" + str(Day_bit_num) + "b}").format(tmp)
+            p = copy.copy(person)
+            p.day_bit = tmp_bit
+            p.day = tmp
+            if check_condition(p) == True:
+                person.day = tmp
+                person.day_bit = tmp_bit
+    for i in range(0, len(person.time_bit)):
+        if random.uniform(0, 1) < mutationProb:
+            tmp = int(switch_char(i, person.time_bit), 2)
+            tmp_bit = ("{0:0" + str(Time_bit_num) + "b}").format(tmp)
+            p = copy.copy(person)
+            p.time_bit = tmp_bit
+            p.time = tmp
+            if check_condition(p) == True:
+                person.time = tmp
+                person.time_bit = tmp_bit
+    return person
 
 
 class Person:
@@ -246,6 +342,7 @@ a1 = float(input("a1: "))
 a2 = float(input("a2: "))
 a3 = float(input("a3: "))
 a4 = float(input("a4: "))
+mutationProb = float(input("Enter Mutation Prob: "))
 print("Profs: ", Profs)
 print("Courses: ", Courses)
 print("Rooms: ", Rooms)
@@ -261,10 +358,19 @@ room_times = np.random.randint(1, size=(len(Rooms), Days, Span[1]-Span[0]) )
 prof_room = np.random.randint(1, size=(len(Profs), len(Rooms)) )
 print("Courses: ", Courses)
 persons = generate_persons()
+print("=================================================")
 print("prof bit: ", Profs_bit_num, " Course bit: ", Courses_bit_num, " Room bit: ", Rooms_bit_num,
       " Day: ", Day_bit_num, " Time bit: ", Time_bit_num)
-for person in persons:
-    print("Persons: ", person.professor)
+for i in range(0, len(persons)):
+    print("========= ", i)
+    a = mutation(persons[i])
+    print("Mutated professor: ", Profs[a.professor])
+    print("Mutated course: ", Courses[a.course])
+    print("Mutated room: ", Rooms[a.room])
+    print("Mutated day: ", a.day)
+    print("Mutated time: ", a.time)
+    print("")
+
 
 #for person in persons:
 #    fitness(person)
