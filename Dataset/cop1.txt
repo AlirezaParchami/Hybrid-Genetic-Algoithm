@@ -1,0 +1,18 @@
+#Course 3
+Math1 95
+Stat1 150
+Geometry -1
+#Prof 2
+Mr.A Math1 Stat1
+Mrs.B Geometry
+#Time 2
+Geometry 1.5
+Stat1 1
+#Room 3
+Class11 25
+Class12 -1
+Class24 40
+#Span 1
+8 18
+#Separate 1
+Math1 Stat1

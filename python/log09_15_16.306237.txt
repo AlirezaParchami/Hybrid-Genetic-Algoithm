@@ -1,0 +1,24 @@
+%%%% RUN:0
+Best Fitness: 1024
+Average Fitness: 1024.0
+Fitness Callback: 16972
+%%%% RUN:1
+Best Fitness: 1024
+Average Fitness: 1024.0
+Fitness Callback: 28442
+%%%% RUN:2
+Best Fitness: 1024
+Average Fitness: 1024.0
+Fitness Callback: 12104
+%%%% RUN:3
+Best Fitness: 1024
+Average Fitness: 1024.0
+Fitness Callback: 12354
+%%%% RUN:4
+Best Fitness: 1024
+Average Fitness: 1024.0
+Fitness Callback: 17373
+======================== Final Results:
+Average Fitness: 1024.0
+Average Average Fitness: 1024.0
+Average Fitness Callback: 17449.0
