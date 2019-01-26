@@ -373,6 +373,37 @@ class Population:
         self.persons = []
         self.fitness = 0
 
+    def update_prof_times(self):
+        for i in range(0, len(Profs)):
+            for j in range(0, Days):
+                for k in range(0, Span[1]-Span[0]):
+                    self.prof_times[i][j][k] = 0
+
+        for i in self.persons:
+            self.prof_times[i.professor][i.day][i.time] += 1
+
+    def update_room_times(self):
+        for i in range(0, len(Rooms)):
+            for j in range(0, Days):
+                for k in range(0, Span[1]-Span[0]):
+                    self.room_times[i][j][k] = 0
+        for i in self.persons:
+            self.room_times[i.room][i.day][i.time] += 1
+
+    def update_prof_room(self):
+        for i in range(0, len(Profs)):
+            for j in range(0, len(Rooms)):
+                self.prof_times[i][j] = 0
+        for i in self.persons:
+            self.prof_room[i.professor][i.room] += 1
+
+    def update(self):
+        self.update_prof_times()
+        self.update_room_times()
+        self.update_prof_room()
+
+
+
 def parent_selection_cop(pops):
     fitness_percent = []
     fitness_sum = 0
@@ -380,7 +411,7 @@ def parent_selection_cop(pops):
         fitness_sum += x.fitness
     tmp = 0
     for x in pops:
-        tmp += (x.fitness)/fitness_sum
+        tmp += (x.fitness/fitness_sum)
         fitness_percent.append(tmp)
 
     candidate_parents = []
@@ -392,7 +423,7 @@ def parent_selection_cop(pops):
                 break
 
     selected_parents = []
-    for i in range(0, int(math.floor(offspringPercent*len(pops)/2)))
+    for i in range(0, int(math.floor(offspringPercent*len(pops)/2))):
         index1 = random.randint(0, len(candidate_parents)-1 )
         index2 = random.randint(0, len(candidate_parents)-1 )
         pair = []
@@ -436,17 +467,23 @@ def crossover_cop(first_pop, second_pop):
     return first_pop, second_pop
 
 
-
-
-
-
 def reproduction_cop(pops):
     children = []
-    SP = parent_selection_cop(pops)  # A list of tuples
+    SP = parent_selection_cop(pops)  # A list of tuples of population
     for pair in SP:
-        pair[0], pair[1] = crossover_cop(pair[0].persons, pair[1].persons)
-        for item in pair[0]:
-            mutation(item.persons)
+        pair[0], pair[1] = crossover_cop(pair[0], pair[1])
+        print("TYPE: ", type(pair[0]))
+        pair[0].update()
+        pair[1].update()
+        for item in range( 0, len(pair[0].persons) ):
+            pair[0].persons[item] = mutation(pair[0].persons[item], pair[0])
+        pair[0].update()
+        for item in range(0, len(pair[1].persons)):
+            pair[1].persons[item] = mutation(pair[1].persons[item], pair[1])
+        pair[1].update()
+        children.append(pair[0])
+        children.append(pair[1])
+    return children
 
 
 filename = input("Enter File name: ")
@@ -476,11 +513,25 @@ size = find_indivsize()
 print("Courses: ", Courses)
 
 maxGen = int(input("Enter The maximum Generation: "))
+popSize = int(input("Enter Population Size: (Recommend to lower than maxGen)"))
 populationS = []
 for g in range(0, maxGen):
     population = Population(len(Profs), Days, Span[1]-Span[0], len(Rooms))
     population.persons = generate_persons(population)
     population.fitness = fitness(population)
     populationS.append(population)
-
-
+children = reproduction_cop(populationS)
+populationS = populationS + children
+for j in populationS:
+    j.fitness = fitness(j)
+populationS.sort(key=lambda o:o.fitness)
+populationS.reverse()
+populationS = populationS[:popSize]
+for i in populationS:
+    print("===================")
+    for j in i.persons:
+        print("Professor: ", Profs[j.professor])
+        print("Course: ", Courses[j.course])
+        print("Room: ", Rooms[j.room])
+        print("Day: ", j.day)
+        print("Time: ", j.time + Span[0])

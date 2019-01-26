@@ -1,7 +1,9 @@
 import string
 import random
 import math
+from builtins import len
 from random import randint
+import datetime
 
 filename = ""
 data = []
@@ -174,11 +176,12 @@ def replacement(persons_list):
     selected = []
     for i in range(0, popSize):
         selected.append(tmp[i][0])
-    ave = 0
+    ave_fit = 0
     for i in range(0, popSize):
-        ave += tmp[i][1]
-    ave = ave / popSize
-    return selected, ave
+        ave_fit += tmp[i][1]
+    ave_fit = ave_fit / popSize
+    return selected, ave_fit
+
 
 def read_file():
     d = open(filename, "r")
@@ -199,43 +202,79 @@ def same_persons(persons):
     return same
 
 
-finfuncstart = 0
-indivSize = int(input("Enter the length of Individual: "))
-popSize = int(input("Enter the number of population: "))
-persons = population_generation(popSize, indivSize)
-print("persons= ", persons)
+def read_parameters():
+    values = []
+    d = open(parameter_filename, "r")
+    for line in d:
+        each_line = line.split(" ")
+        if each_line[0] in ["parentPercent", "offspringPercent", "crossoverProb", "mutaionProb"]:
+            tmp = float(each_line[1])
+        else:
+            tmp = int(each_line[1])
+        values.append(tmp)
+    d.close()
+    return values
+
+
+
+parameter_filename = input("Enter Parameter File name: ")
+parameter_filename = "..//Dataset//" + parameter_filename + ".txt"
+indivSize, popSize, parentPercent, offspringPercent, maxGen, crossoverProb, mutaionProb, TabuSize, MaxSideWay, MaxImprove = read_parameters()
+
 filename = input("Enter the name of your file: ")
 filename = "..//Dataset//" + filename + ".txt"
-parentPercent = float(input("Enter parent percent: "))
-offspringPercent = float(input("Enter offspring percent: "))
-maxGen = int(input("Enter max generation number: "))
-crossoverProb = float(input("Enter Crossover Probability: "))
-mutaionProb = float(input("Enter Mutation Probability: "))
-TabuSize = int(input("Enter Tabu Size: "))
-MaxSideWay = int(input("Enter Max Sizeway: "))
-MaxImprove = int(input("Enter Max Improve: "))
 read_file()
 
-while maxGen > 0:
-    person_fitness = []
-    #print("Persons: ", persons)
-    for person in persons:
-        person_fitness.append(knapsnack(person))
-    #print("Person Fitness: ", person_fitness)
-    children = reproduction(crossoverProb, mutaionProb, persons, person_fitness, parentPercent, offspringPercent)
-    #print("Children: ", children)
-    improved_children = []
-    for child in children:
-        tabu = []
-        improved_children.append(hill_climbing(child, 0, 0, tabu))
-    persons = persons + improved_children
-    persons, average = replacement(persons)
-    if same_persons(persons):
-        break
-    maxGen -= 1
+run_range = 5
+Results = []
+for run in range(0, run_range):
+    print("%%%% RUN: ", run)
+    finfuncstart = 0
+    persons = population_generation(popSize, indivSize)
+    print("persons= ", persons)
 
+    while maxGen > 0:
+        person_fitness = []
+        #print("Persons: ", persons)
+        for person in persons:
+            person_fitness.append(knapsnack(person))
+        #print("Person Fitness: ", person_fitness)
+        children = reproduction(crossoverProb, mutaionProb, persons, person_fitness, parentPercent, offspringPercent)
+        #print("Children: ", children)
+        improved_children = []
+        for child in children:
+            tabu = []
+            improved_children.append(hill_climbing(child, 0, 0, tabu))
+        persons = persons + improved_children
+        persons, ave_fit = replacement(persons)
+        if same_persons(persons):
+            break
+        maxGen -= 1
+    result = [knapsnack(persons[0]), ave_fit, finfuncstart]
+    Results.append(result)
+a = str(datetime.datetime.now()).split(" ")
+print("time: ", a)
+output_file_name = "log" + str(datetime.datetime.now()).split(" ")[1].replace(":","_") + ".txt"
+output = open(output_file_name, "x")
+ave_best_fitness = 0
+ave_ave_fit = 0
+ave_finfuncstart = 0
+for i in range(0, len(Results)):
+    ave_best_fitness += float(Results[i][0])
+    ave_ave_fit += float(Results[i][1])
+    ave_finfuncstart += float(Results[i][2])
 
-print("BEST Person: ", persons[0])
-print("Best Person Fitness: ", knapsnack(persons[0]))
-print("Fitness average: ", average)
+    text = "%%%% RUN:" + str(i)
+    output.write(text + "\n")
+    output.write("Best Fitness: " + str(Results[i][0]) + "\n")
+    output.write("Average Fitness: " + str(Results[i][1]) + "\n")
+    output.write("Fitness Callback: " + str(Results[i][2]) + "\n")
+output.write("======================== Final Results:" + "\n")
+ave_best_fitness /= run_range
+ave_ave_fit /= run_range
+ave_finfuncstart /= run_range
+output.write("Average Fitness: " + str(ave_best_fitness) + "\n")
+output.write("Average Average Fitness: " + str(ave_ave_fit) + "\n")
+output.write("Average Fitness Callback: " + str(ave_finfuncstart) + "\n")
+output.close()
 
