@@ -448,7 +448,15 @@ def crossover_cop(first_pop, second_pop):
     second_pop.persons[rands[0]:rands[1]] = tmp
     first_pop.update()
     second_pop.update()
-
+    consistency = True
+    for i in first_pop.persons:
+        if check_condition(i, first_pop) == False:
+            consistency = False
+    for i in second_pop.persons:
+        if check_condition(i, second_pop) == False:
+            consistency = False
+    if consistency == True:
+        return first_pop, second_pop
     return first_pop_tmp, second_pop_tmp
 
 
