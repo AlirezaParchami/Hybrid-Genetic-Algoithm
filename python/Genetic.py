@@ -8,7 +8,6 @@ import datetime
 filename = ""
 data = []
 
-
 def individual_generation(indiv_size):
     """create stochastic individuals"""
     s = ""
@@ -148,6 +147,8 @@ def hill_climbing(mychild, improve, sideway, tabu):
     if sorted_values[0][1] > child_value:
     #    print("improve")
         improve += 1
+        tabu.clear()
+        sideway = 0
         improved_child = hill_climbing(sorted_values[0][0], improve, sideway, tabu)
     elif sorted_values[0][1] < child_value:
     #    print("return")
@@ -228,11 +229,8 @@ read_file()
 run_range = 5
 Results = []
 for run in range(0, run_range):
-    print("%%%% RUN: ", run)
     finfuncstart = 0
     persons = population_generation(popSize, indivSize)
-    print("persons= ", persons)
-
     while maxGen > 0:
         person_fitness = []
         #print("Persons: ", persons)
@@ -252,9 +250,7 @@ for run in range(0, run_range):
         maxGen -= 1
     result = [knapsnack(persons[0]), ave_fit, finfuncstart]
     Results.append(result)
-a = str(datetime.datetime.now()).split(" ")
-print("time: ", a)
-output_file_name = "log" + str(datetime.datetime.now()).split(" ")[1].replace(":","_") + ".txt"
+output_file_name = "Genetic_log" + str(datetime.datetime.now()).split(" ")[1].replace(":", "_") + ".txt"
 output = open(output_file_name, "x")
 ave_best_fitness = 0
 ave_ave_fit = 0

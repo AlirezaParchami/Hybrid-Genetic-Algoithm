@@ -2,6 +2,7 @@ import math
 import numpy as np
 import random
 import copy
+import datetime
 
 Profs = []
 Courses = []
@@ -167,7 +168,7 @@ def optimum_room_for_professor(prof, rooms, ans):
 def generate_persons(ans):
     persons = []
     for course in range(0, len(Courses)):
-        print("========================================== ", course)
+#        print("========================================== ", course)
         prof = available_profs(Courses[course])
         # Select random professor because we don't have any optimization condition
         prof = prof[random.randint(0, len(prof)-1)]
@@ -175,11 +176,11 @@ def generate_persons(ans):
         room = optimum_room_for_professor(prof, room, ans)  # room[random.randint(0, len(room)-1)]
         day = optimum_day_for_prof(prof, ans)
         time, day = available_time(Courses[course], prof, room, day, ans)
-        print("course: ", Courses[course])
-        print("prof: ", Profs[prof])
-        print("room: ", Rooms[room])
-        print("day: ", day)
-        print("time: ", time)
+ #       print("course: ", Courses[course])
+ #       print("prof: ", Profs[prof])
+ #       print("room: ", Rooms[room])
+ #       print("day: ", day)
+ #       print("time: ", time)
         ans.prof_room[prof][room] += 1
         person = Person(prof, course, room, day, time)
         person.toBit(Profs_bit_num, Courses_bit_num, Rooms_bit_num, Day_bit_num, Time_bit_num)
@@ -230,22 +231,24 @@ def sdt(hours):
     return np.var(hours)
 
 
-def dist():
+def dist(ans):
     distance = 0
-    classes = []
     #for sep in Separates:
-    #    tmp = []
-    #    for person in persons:
-    #        if Co#urses[person.course][0] in sep and Courses[person.course][0] not in tmp:
-    return 0
+    #        tmp = []
+    #        for person in ans.persons:
+    #            if Courses[person.course][0] in sep and Courses[person.course][0] not in tmp:
+    #                tmp.append(Courses[person.course][0])
+    return distance
 
 
 def fitness(ans):
+    global count
+    count += 1
     days = num_days(ans)
     rooms = num_rooms(ans)
     hours = Total_time_a_day(ans)
     variance = sdt(hours)
-    distance = dist()
+    distance = dist(ans)
     fit = (a1*days) + (a2*rooms) + (a3*variance) + (a4*distance)
     return fit
 
@@ -362,7 +365,7 @@ class Person:
         self.day_bit = ("{0:0" + str(day_bit_num) + "b}").format(self.day)  # day = bin(day)[2:]
         self.time_bit = ("{0:0" + str(time_bit_num) + "b}").format(self.time)  # time = bin(time)[2:]
         self.person_bit = self.professor + self.course + self.room + self.day + self.time
-    persons = []
+#    persons = []
 
 
 class Population:
@@ -438,33 +441,15 @@ def crossover_cop(first_pop, second_pop):
         return first_pop, second_pop
     rands = random.sample(range( 1, min(len(first_pop.persons),len(second_pop.persons))-1 ), 2)
     rands.sort()
-    tmp = []
     tmp = first_pop.persons[rands[0]:rands[1]]
+    first_pop_tmp = copy.copy(first_pop)
+    second_pop_tmp = copy.copy(second_pop)
     first_pop.persons[rands[0]:rands[1]] = second_pop.persons[rands[0]:rands[1]]
     second_pop.persons[rands[0]:rands[1]] = tmp
-    """
-    one_list.append(one.professor)
-    one_list.append(one.course)
-    one_list.append(one.room)
-    one_list.append(one.day)
-    one_list.append(one.time)
-    two_list.append(two.professor)
-    two_list.append(two.course)
-    two_list.append(two.room)
-    two_list.append(two.day)
-    two_list.append(two.time)
-    tmp_list = copy.copy(one_list)
-    # new_one = one[:rands[0]] + two[rands[0]:rands[1]] + one[rands[1]:]
-    for i in range(rands[0], rands[1]):
-        one_list[i] = two_list[i]
-    # new_two = two[:rands[0]] + one[rands[0]:rands[1]] + two[rands[1]:]
-    for i in range(rands[0], rands[1]):
-        two_list[i] = tmp_list[i]
-    
-    new_one = Person(one_list[0], one_list[1], one_list[2], one_list[3], one_list[4])
-    new_two = Person(two_list[0], two_list[1], two_list[2], two_list[3], two_list[4])
-    """
-    return first_pop, second_pop
+    first_pop.update()
+    second_pop.update()
+
+    return first_pop_tmp, second_pop_tmp
 
 
 def reproduction_cop(pops):
@@ -472,7 +457,6 @@ def reproduction_cop(pops):
     SP = parent_selection_cop(pops)  # A list of tuples of population
     for pair in SP:
         pair[0], pair[1] = crossover_cop(pair[0], pair[1])
-        print("TYPE: ", type(pair[0]))
         pair[0].update()
         pair[1].update()
         for item in range( 0, len(pair[0].persons) ):
@@ -514,24 +498,62 @@ print("Courses: ", Courses)
 
 maxGen = int(input("Enter The maximum Generation: "))
 popSize = int(input("Enter Population Size: (Recommend to lower than maxGen)"))
-populationS = []
-for g in range(0, maxGen):
-    population = Population(len(Profs), Days, Span[1]-Span[0], len(Rooms))
-    population.persons = generate_persons(population)
-    population.fitness = fitness(population)
-    populationS.append(population)
-children = reproduction_cop(populationS)
-populationS = populationS + children
-for j in populationS:
-    j.fitness = fitness(j)
-populationS.sort(key=lambda o:o.fitness)
-populationS.reverse()
-populationS = populationS[:popSize]
-for i in populationS:
-    print("===================")
-    for j in i.persons:
-        print("Professor: ", Profs[j.professor])
-        print("Course: ", Courses[j.course])
-        print("Room: ", Rooms[j.room])
-        print("Day: ", j.day)
-        print("Time: ", j.time + Span[0])
+run_times = 5
+results = []
+
+output_file_name = "COP_log" + str(datetime.datetime.now()).split(" ")[1].replace(":", "_") + ".txt"
+output = open(output_file_name, "x")
+
+
+for rt in range(0, run_times):
+    count = 0
+    populationS = []
+    for g in range(0, maxGen):
+        population = Population(len(Profs), Days, Span[1]-Span[0], len(Rooms))
+        population.persons = generate_persons(population)
+        population.fitness = fitness(population)
+        populationS.append(population)
+    children = reproduction_cop(populationS)
+    populationS = populationS + children
+    for j in populationS:
+        j.fitness = fitness(j)
+    populationS.sort(key=lambda o:o.fitness)
+    populationS.reverse()
+    populationS = populationS[:popSize]
+    output.write("\n" + "================================================= RUN: " + str(rt) + "\n")
+    output.write("Best Population Fitness:" +  str(populationS[0].fitness) + "\n")
+    ave_fitness = 0
+    for i in populationS:
+        ave_fitness += i.fitness
+    ave_fitness /= popSize
+    output.write("Fitness Average:" + str(ave_fitness) + "\n")
+
+    output.write("Best Schedule:" + "\n")
+    for j in populationS[0].persons:
+        output.write("Professor: " + str(Profs[j.professor]) + "\n")
+        output.write("Course: " + str(Courses[j.course]) + "\n")
+        output.write("Room: " + str(Rooms[j.room]) + "\n")
+        output.write("Day: " + str(j.day) + "\n")
+        output.write("Time: " + str(j.time + Span[0]) + "\n" + "\n")
+    result = [populationS[0], ave_fitness, count]
+    results.append(result)
+output.write("\n" + "*****************************************************Finally:" + "\n")
+results.sort(key=lambda o:o[0].fitness)
+results.reverse()
+ave_ave_fitness = 0
+ave_count = 0
+for i in results:
+    ave_ave_fitness += i[1]
+    ave_count += i[2]
+ave_ave_fitness /= len(results)
+ave_count /= len(results)
+output.write("Average of Average of fitness:" + str(ave_ave_fitness) + "\n")
+output.write("Best Person:" + "\n")
+for j in results[0][0].persons:
+    output.write("Professor: " + str(Profs[j.professor]) + "\n")
+    output.write("Course: " + str(Courses[j.course]) + "\n")
+    output.write("Room: " + str(Rooms[j.room]) + "\n")
+    output.write("Day: " + str(j.day) + "\n")
+    output.write("Time: " + str(j.time + Span[0]) + "\n")
+
+

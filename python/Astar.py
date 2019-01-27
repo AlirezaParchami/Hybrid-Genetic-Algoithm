@@ -23,6 +23,8 @@ def read_file():
         data.append(tmp)
 
 def knapsnack(x):
+    global count
+    count += 1
     # Read first line and detect the number and MaxWeight
     numbers = data[0][0]
     max_weight = data[0][1]
@@ -43,12 +45,6 @@ def knapsnack(x):
     if sum_weight > max_weight:
         sum_value = 0
     return sum_value, sum_weight
-
-
-def heuristic(cand):
-    cand.sort(key=lambda x: x.actual_cost + x.estimated_cost)
-    cand.reverse()
-    return cand
 
 
 def switch_char(index, child):
@@ -133,30 +129,19 @@ def Astar(start):
 
     raise ValueError('No Path Found')
 
-
+count = 0
 filename = input("Enter the name of your file: ")
-if filename == "ks_20_878":
-    #optimum_value = 136
-    optimum_value = 1024
-elif filename == "ks_100_997":
-    optimum_value = 2397
-elif filename == "ks_200_1008":
-    optimum_value = 1634
-else:
-    print("Something is wrong in filename")
 filename = "..//Dataset//" + filename + ".txt"
-#indivSize = int(input("Enter the length of Individual: "))
 read_file()
-indivSize = data[0][0]
+optimum_value = int(input("Enter Optimum value: "))
 
+indivSize = data[0][0]
 maxWeight = data[0][1]
+
 init = "0" * indivSize
-print("maxWeight: ", maxWeight)
-print("init: ", init)
 start_node = Node(init)
 path = Astar(start_node)
 print("Path: ")
 for i in path:
-    print("\nstring: ", i.string)
-    print("G: ", i.G)
-    print("weight: ", i.weight)
+    print("string:", i.string, "      Actual cost:", i.G, "      weight:", i.weight)
+print("count: ", count)
